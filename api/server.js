@@ -1,0 +1,125 @@
+import express from "express";
+import axios from "axios";
+import cors from "cors";
+import dotenv from "dotenv";
+import { randomUUID } from "crypto";
+
+dotenv.config();
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// --- Airtable Konfiguration ---
+const AIRTABLE_TOKEN = process.env.AIRTABLE_TOKEN; // .env
+const BASE_ID = "appItENfteYmYF2Uk";               // aus Ihrer URL
+const TABLE_ID = "tbl3kFfmqMlXJi8eh";              // aus Ihrer URL (stabiler als Name)
+
+const airtable = axios.create({
+  baseURL: `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}`,
+  headers: {
+    Authorization: `Bearer ${AIRTABLE_TOKEN}`,
+    "Content-Type": "application/json",
+  },
+});
+
+// Hilfsfunktion: Eingabe sicher in Formel einsetzen
+function escapeForFormula(str = "") {
+  // einfache Maskierung von einfachen Anführungszeichen
+  return String(str).replace(/'/g, "\\'");
+}
+
+// GET /api/search?q=Max Mu
+app.get("/api/search", async (req, res) => {
+  const q = (req.query.q || "").trim();
+  if (!q) return res.json([]);
+
+  try {
+    const safe = escapeForFormula(q.toLowerCase());
+    const formula = `OR(
+      FIND('${safe}', LOWER({Vorname}))>0,
+      FIND('${safe}', LOWER({Nachname}))>0,
+      FIND('${safe}', LOWER({Vorname}&' '&{Nachname}))>0
+    )`;
+
+    const response = await airtable.get("", {
+      params: {
+        filterByFormula: formula, // axios encodet korrekt
+        pageSize: 10,
+      },
+    });
+
+    res.json(response.data.records || []);
+  } catch (err) {
+    console.error("Suche Fehler:", err.response?.data || err.message);
+    res.status(500).json({ error: "Fehler bei der Suche in Airtable" });
+  }
+});
+
+// POST /api/create { vorname, nachname, sterne }
+app.post("/api/create", async (req, res) => {
+  const { vorname, nachname, sterne } = req.body || {};
+  if (!vorname || !nachname) {
+    return res.status(400).json({ error: "Vorname und Nachname sind erforderlich" });
+  }
+  const rating = Number(sterne) || 0; // Rating erwartet Zahl 0–5
+
+  try {
+    const response = await airtable.post("", {
+      records: [
+        {
+          fields: {
+            ID: randomUUID().slice(0, 8),
+            Vorname: String(vorname).trim(),
+            Nachname: String(nachname).trim(),
+            Sterne: rating,
+          },
+        },
+      ],
+    });
+    res.json({ success: true, record: response.data.records?.[0] });
+  } catch (err) {
+    console.error("Erstellen Fehler:", err.response?.data || err.message);
+    res.status(500).json({ error: "Fehler beim Erstellen in Airtable" });
+  }
+});
+
+// POST /api/update { recordId, sterne }
+app.post("/api/update", async (req, res) => {
+  const { recordId, sterne } = req.body || {};
+  if (!recordId) return res.status(400).json({ error: "recordId fehlt" });
+
+  try {
+    const response = await airtable.patch("", {
+      records: [
+        {
+          id: recordId,
+          fields: { Sterne: Number(sterne) || 0 },
+        },
+      ],
+    });
+    res.json({ success: true, record: response.data.records?.[0] });
+  } catch (err) {
+    console.error("Update Fehler:", err.response?.data || err.message);
+    res.status(500).json({ error: "Fehler beim Aktualisieren in Airtable" });
+  }
+});
+
+// Debug: zeigt an, ob Token & Zugriff okay sind und listet 3 Records
+app.get("/api/debug", async (_req, res) => {
+  try {
+    const response = await airtable.get("", { params: { pageSize: 3 } });
+    res.json({
+      ok: true,
+      count: response.data.records?.length ?? 0,
+      sample: response.data.records?.map(r => ({ id: r.id, fields: r.fields })),
+    });
+  } catch (err) {
+    res.status(500).json({
+      ok: false,
+      error: err.response?.data || err.message,
+    });
+  }
+});
+
+const PORT = 5050;
+export default app;
