@@ -47,15 +47,8 @@ export default function App() {
     setStatus("Speichere...");
     try {
       const payload = selected.isNew
-        ? {
-            vorname: selected.vorname,
-            nachname: selected.nachname,
-            sterne,
-          }
-        : {
-            recordId: selected.id,
-            sterne,
-          };
+        ? { vorname: selected.vorname, nachname: selected.nachname, sterne }
+        : { recordId: selected.id, sterne };
       await axios.post(apiBase, payload);
       setStatus("Gespeichert!");
     } catch {
