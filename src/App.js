@@ -15,22 +15,32 @@ export default function App() {
   const [selected, setSelected] = useState(null);
   const [sterne, setSterne] = useState(0);
   const [status, setStatus] = useState("");
-  const [loading, setLoading] = useState(false); // 👈 neu: Ladezustand
+  const [loading, setLoading] = useState(false); // 🔹 Ladezustand
+  const [searched, setSearched] = useState(false); // 🔹 merkt, ob Suche abgeschlossen ist
 
   useEffect(() => {
     const fetchResults = async () => {
-      if (!query.trim()) return setResults([]);
-      setLoading(true); // Ladeanzeige starten
+      if (!query.trim()) {
+        setResults([]);
+        setSearched(false);
+        return;
+      }
+
+      setLoading(true);
+      setSearched(false);
+
       try {
         const res = await axios.get(`${apiBase}?search=${encodeURIComponent(query)}`);
         setResults(res.data);
       } catch {
         setResults([]);
       } finally {
-        setLoading(false); // Ladeanzeige beenden
+        setLoading(false);
+        setSearched(true);
       }
     };
-    const delay = setTimeout(fetchResults, 400); // kleine Verzögerung für flüssiges Tippen
+
+    const delay = setTimeout(fetchResults, 400);
     return () => clearTimeout(delay);
   }, [query]);
 
@@ -54,11 +64,11 @@ export default function App() {
       const payload = selected.isNew
         ? { vorname: selected.vorname, nachname: selected.nachname, sterne }
         : { recordId: selected.id, sterne };
-      await axios.post(apiBase, payload);
 
+      await axios.post(apiBase, payload);
       setStatus("Gespeichert!");
 
-      // 🎉 Konfetti-Effekt starten
+      // 🎉 Konfetti-Effekt
       confetti({
         particleCount: 100,
         spread: 70,
@@ -93,7 +103,7 @@ export default function App() {
             Bitte gib deinen vollständigen Namen ein.
           </motion.p>
 
-          {/* 🔄 Ladeindikator */}
+          {/* 🔄 Ladeanzeige */}
           {loading && (
             <div className="spinner-container">
               <div className="spinner"></div>
@@ -101,21 +111,21 @@ export default function App() {
             </div>
           )}
 
-          {/* Ergebnisse */}
+          {/* Ergebnisse erst nach Ladevorgang */}
           <AnimatePresence>
-            {!loading && query && (
+            {!loading && searched && query && (
               <motion.div
                 className="results"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
               >
-                {/* Neu-Button immer oben */}
+                {/* ➕ Neu-Button oben */}
                 <div className="result-item new" onClick={handleNew}>
                   ➕ Neue Bewertung für „{query}“ hinzufügen
                 </div>
 
-                {/* Gefundene Ergebnisse darunter */}
+                {/* Gefundene Ergebnisse */}
                 {results.length > 0 &&
                   results.map((r) => (
                     <div
