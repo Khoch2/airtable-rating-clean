@@ -3,6 +3,12 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import "./App.css";
 
+// Basis-URL für lokale Entwicklung oder Vercel
+const apiBase =
+  process.env.NODE_ENV === "production"
+    ? "" // in Produktion ruft es automatisch die Serverless-Funktion auf
+    : "http://localhost:5050";
+
 export default function App() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -10,6 +16,7 @@ export default function App() {
   const [sterne, setSterne] = useState(0);
   const [status, setStatus] = useState("");
 
+  // 🔍 Sofortsuche bei jeder Eingabe
   useEffect(() => {
     const fetchResults = async () => {
       if (query.length < 1) {
@@ -17,7 +24,7 @@ export default function App() {
         return;
       }
       try {
-        const res = await axios.get(`http://localhost:5050/api/search?q=${query}`);
+        const res = await axios.get(`${apiBase}/api/search?q=${query}`);
         setResults(res.data);
       } catch {
         setResults([]);
@@ -47,14 +54,14 @@ export default function App() {
     setStatus("Speichere...");
     try {
       if (selected.isNew) {
-        await axios.post("http://localhost:5050/api/create", {
+        await axios.post(`${apiBase}/api/create`, {
           vorname: selected.vorname,
           nachname: selected.nachname,
           sterne,
         });
         setStatus("Bewertung gespeichert!");
       } else {
-        await axios.post("http://localhost:5050/api/update", {
+        await axios.post(`${apiBase}/api/update`, {
           recordId: selected.id,
           sterne,
         });
