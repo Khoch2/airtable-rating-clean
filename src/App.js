@@ -3,11 +3,10 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import "./App.css";
 
-// API-Basis: auf Vercel automatisch /api
 const apiBase =
   process.env.NODE_ENV === "production"
-    ? "/api"
-    : "http://localhost:5050/api";
+    ? "/api/server"
+    : "http://localhost:5050/api/server";
 
 export default function App() {
   const [query, setQuery] = useState("");
@@ -16,15 +15,11 @@ export default function App() {
   const [sterne, setSterne] = useState(0);
   const [status, setStatus] = useState("");
 
-  // 🔍 Sofortsuche bei jeder Eingabe
   useEffect(() => {
     const fetchResults = async () => {
-      if (query.length < 1) {
-        setResults([]);
-        return;
-      }
+      if (!query.trim()) return setResults([]);
       try {
-        const res = await axios.get(`${apiBase}/search?q=${query}`);
+        const res = await axios.get(`${apiBase}?search=${encodeURIComponent(query)}`);
         setResults(res.data);
       } catch {
         setResults([]);
@@ -42,8 +37,7 @@ export default function App() {
 
   const handleNew = () => {
     const [vorname, ...rest] = query.trim().split(" ");
-    const nachname = rest.join(" ");
-    setSelected({ isNew: true, vorname, nachname });
+    setSelected({ isNew: true, vorname, nachname: rest.join(" ") });
     setSterne(0);
     setResults([]);
   };
@@ -52,20 +46,18 @@ export default function App() {
     if (!selected) return;
     setStatus("Speichere...");
     try {
-      if (selected.isNew) {
-        await axios.post(`${apiBase}/create`, {
-          vorname: selected.vorname,
-          nachname: selected.nachname,
-          sterne,
-        });
-        setStatus("Bewertung gespeichert!");
-      } else {
-        await axios.post(`${apiBase}/update`, {
-          recordId: selected.id,
-          sterne,
-        });
-        setStatus("Bewertung aktualisiert!");
-      }
+      const payload = selected.isNew
+        ? {
+            vorname: selected.vorname,
+            nachname: selected.nachname,
+            sterne,
+          }
+        : {
+            recordId: selected.id,
+            sterne,
+          };
+      await axios.post(apiBase, payload);
+      setStatus("Gespeichert!");
     } catch {
       setStatus("Fehler beim Speichern.");
     }
@@ -103,11 +95,7 @@ export default function App() {
               >
                 {results.length > 0 ? (
                   results.map((r) => (
-                    <div
-                      key={r.id}
-                      className="result-item"
-                      onClick={() => handleSelect(r)}
-                    >
+                    <div key={r.id} className="result-item" onClick={() => handleSelect(r)}>
                       {r.fields.Vorname} {r.fields.Nachname}
                     </div>
                   ))
