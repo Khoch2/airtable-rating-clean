@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import "./App.css";
 import confetti from "canvas-confetti";
-
+import "./App.css";
 
 const apiBase =
   process.env.NODE_ENV === "production"
@@ -16,18 +15,22 @@ export default function App() {
   const [selected, setSelected] = useState(null);
   const [sterne, setSterne] = useState(0);
   const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false); // 👈 neu: Ladezustand
 
   useEffect(() => {
     const fetchResults = async () => {
       if (!query.trim()) return setResults([]);
+      setLoading(true); // Ladeanzeige starten
       try {
         const res = await axios.get(`${apiBase}?search=${encodeURIComponent(query)}`);
         setResults(res.data);
       } catch {
         setResults([]);
+      } finally {
+        setLoading(false); // Ladeanzeige beenden
       }
     };
-    const delay = setTimeout(fetchResults, 300);
+    const delay = setTimeout(fetchResults, 400); // kleine Verzögerung für flüssiges Tippen
     return () => clearTimeout(delay);
   }, [query]);
 
@@ -52,23 +55,21 @@ export default function App() {
         ? { vorname: selected.vorname, nachname: selected.nachname, sterne }
         : { recordId: selected.id, sterne };
       await axios.post(apiBase, payload);
-  
+
       setStatus("Gespeichert!");
-  
+
       // 🎉 Konfetti-Effekt starten
       confetti({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
       });
-  
-      // Nach kurzer Zeit zurücksetzen
+
       setTimeout(() => setStatus(""), 2500);
     } catch {
       setStatus("Fehler beim Speichern.");
     }
   };
-  
 
   return (
     <div className="wrapper">
@@ -92,8 +93,17 @@ export default function App() {
             Bitte gib deinen vollständigen Namen ein.
           </motion.p>
 
+          {/* 🔄 Ladeindikator */}
+          {loading && (
+            <div className="spinner-container">
+              <div className="spinner"></div>
+              <p className="loading-text">Suche läuft...</p>
+            </div>
+          )}
+
+          {/* Ergebnisse */}
           <AnimatePresence>
-            {query && (
+            {!loading && query && (
               <motion.div
                 className="results"
                 initial={{ opacity: 0, y: -10 }}
@@ -147,9 +157,8 @@ export default function App() {
           </div>
 
           <button onClick={handleSave} disabled={status === "Speichere..."}>
-  {status === "Speichere..." ? "Speichern..." : "Speichern"}
-</button>
-
+            {status === "Speichere..." ? "Speichern..." : "Speichern"}
+          </button>
           <button className="back" onClick={() => setSelected(null)}>
             Zurück
           </button>
