@@ -114,7 +114,7 @@ export default function App() {
   return (
     <div className="wrapper">
       <motion.h1 initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        Gib deine Bewertung ab
+        Status-Abfrage für unser Projekt
       </motion.h1>
 
       {!selected && (
@@ -176,7 +176,7 @@ export default function App() {
                   <div className="add-new-only">
                     <p>Kein Eintrag gefunden.</p>
                     <button className="add-new-btn" onClick={handleNew}>
-                      + Neue Bewertung für „{query}“ hinzufügen
+                      + Neuen Eintrag für „{query}“ erstellen
                     </button>
                   </div>
                 )}
