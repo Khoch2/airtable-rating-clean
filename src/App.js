@@ -3,11 +3,11 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import "./App.css";
 
-// Basis-URL für lokale Entwicklung oder Vercel
+// API-Basis: auf Vercel automatisch /api
 const apiBase =
   process.env.NODE_ENV === "production"
-    ? "/api/server"
-    : "http://localhost:5050";
+    ? "/api"
+    : "http://localhost:5050/api";
 
 export default function App() {
   const [query, setQuery] = useState("");
@@ -24,13 +24,12 @@ export default function App() {
         return;
       }
       try {
-        const res = await axios.get(`${apiBase}/api/search?q=${query}`);
+        const res = await axios.get(`${apiBase}/search?q=${query}`);
         setResults(res.data);
       } catch {
         setResults([]);
       }
     };
-
     const delay = setTimeout(fetchResults, 300);
     return () => clearTimeout(delay);
   }, [query]);
@@ -54,14 +53,14 @@ export default function App() {
     setStatus("Speichere...");
     try {
       if (selected.isNew) {
-        await axios.post(`${apiBase}/api/create`, {
+        await axios.post(`${apiBase}/create`, {
           vorname: selected.vorname,
           nachname: selected.nachname,
           sterne,
         });
         setStatus("Bewertung gespeichert!");
       } else {
-        await axios.post(`${apiBase}/api/update`, {
+        await axios.post(`${apiBase}/update`, {
           recordId: selected.id,
           sterne,
         });
@@ -86,8 +85,6 @@ export default function App() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-
-          {/* Hinweisfeld */}
           <motion.p
             className="hint"
             initial={{ opacity: 0 }}
@@ -106,13 +103,17 @@ export default function App() {
               >
                 {results.length > 0 ? (
                   results.map((r) => (
-                    <div key={r.id} className="result-item" onClick={() => handleSelect(r)}>
+                    <div
+                      key={r.id}
+                      className="result-item"
+                      onClick={() => handleSelect(r)}
+                    >
                       {r.fields.Vorname} {r.fields.Nachname}
                     </div>
                   ))
                 ) : (
                   <div className="result-item new" onClick={handleNew}>
-                    ➕ Eine neue Bewertung für „{query}“ hinzufügen
+                    ➕ Neue Bewertung für „{query}“ hinzufügen
                   </div>
                 )}
               </motion.div>
