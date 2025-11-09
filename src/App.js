@@ -15,8 +15,8 @@ export default function App() {
   const [selected, setSelected] = useState(null);
   const [sterne, setSterne] = useState(0);
   const [status, setStatus] = useState("");
-  const [loading, setLoading] = useState(false); // 🔹 Ladezustand
-  const [searched, setSearched] = useState(false); // 🔹 merkt, ob Suche abgeschlossen ist
+  const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -111,31 +111,55 @@ export default function App() {
             </div>
           )}
 
-          {/* Ergebnisse erst nach Ladevorgang */}
+          {/* Ergebnisse */}
           <AnimatePresence>
             {!loading && searched && query && (
               <motion.div
-                className="results"
+                className="results modern"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
               >
-                {/* ➕ Neu-Button oben */}
-                <div className="result-item new" onClick={handleNew}>
-                  ➕ Neue Bewertung für „{query}“ hinzufügen
-                </div>
-
-                {/* Gefundene Ergebnisse */}
-                {results.length > 0 &&
-                  results.map((r) => (
-                    <div
-                      key={r.id}
-                      className="result-item"
-                      onClick={() => handleSelect(r)}
-                    >
-                      {r.fields.Vorname} {r.fields.Nachname}
+                {results.length > 0 ? (
+                  <>
+                    <p className="results-header">
+                      Wählen Sie Ihren Namen aus:
+                    </p>
+                    {results.map((r) => (
+                      <div
+                        key={r.id}
+                        className="result-item modern-item"
+                        onClick={() => handleSelect(r)}
+                      >
+                        <div className="name">
+                          {r.fields.Vorname} {r.fields.Nachname}
+                        </div>
+                        {r.fields.Sterne ? (
+                          <div className="stars-preview">
+                            {"★".repeat(r.fields.Sterne)}
+                          </div>
+                        ) : (
+                          <div className="stars-preview empty">Noch keine Bewertung</div>
+                        )}
+                      </div>
+                    ))}
+                    <div className="add-new-section">
+                      <p className="small-info">
+                        Ihr Name ist nicht in der Liste?
+                      </p>
+                      <button className="add-new-btn" onClick={handleNew}>
+                        + Neue Bewertung hinzufügen
+                      </button>
                     </div>
-                  ))}
+                  </>
+                ) : (
+                  <div className="add-new-only">
+                    <p>Keine Einträge gefunden.</p>
+                    <button className="add-new-btn" onClick={handleNew}>
+                      + Neue Bewertung für „{query}“ hinzufügen
+                    </button>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
