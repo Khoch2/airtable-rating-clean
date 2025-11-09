@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     },
   });
 
-  // Suche
+  // 🔍 Suche
   if (req.method === "GET") {
     const q = (req.query.search || "").trim();
     if (!q) return res.status(200).json([]);
@@ -37,13 +37,33 @@ export default async function handler(req, res) {
     }
   }
 
-  // Speichern (neu oder update)
+  // 💾 Speichern / Update
   if (req.method === "POST") {
-    const { vorname, nachname, sterne, recordId } = req.body || {};
+    const { vorname, nachname, sterne, recordId, log } = req.body || {};
     try {
+      const now = new Date();
+      const formattedDate = now.toLocaleDateString("de-DE", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+      const formattedTime = now.toLocaleTimeString("de-DE", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
       if (recordId) {
+        const existing = await airtable.get(`/${recordId}`);
+        const oldLog = existing.data.fields.LOG || "";
+        const newLog = `${log}\n${oldLog}`.trim();
+
         const response = await airtable.patch("", {
-          records: [{ id: recordId, fields: { Sterne: Number(sterne) || 0 } }],
+          records: [
+            {
+              id: recordId,
+              fields: { Sterne: Number(sterne) || 0, LOG: newLog },
+            },
+          ],
         });
         return res.status(200).json({ success: true, record: response.data.records?.[0] });
       } else {
@@ -55,6 +75,7 @@ export default async function handler(req, res) {
                 Vorname: vorname?.trim() || "",
                 Nachname: nachname?.trim() || "",
                 Sterne: Number(sterne) || 0,
+                LOG: `${formattedDate}, ${formattedTime} Uhr - neuer Eintrag erstellt`,
               },
             },
           ],

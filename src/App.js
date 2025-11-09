@@ -57,25 +57,55 @@ export default function App() {
     setResults([]);
   };
 
-  const handleSave = async () => {
+  const updateStars = async (change) => {
     if (!selected) return;
+    const newStars = Math.min(5, Math.max(0, sterne + change));
+    if (newStars === sterne) return;
+
+    const action = change > 0 ? "erhöht" : "verringert";
+    const date = new Date();
+    const formattedDate = date.toLocaleDateString("de-DE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+    const formattedTime = date.toLocaleTimeString("de-DE", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    const logEntry = `${formattedDate}, ${formattedTime} Uhr - von ${sterne} auf ${newStars} Sterne ${action}`;
+
+    setSterne(newStars);
     setStatus("Speichere...");
+
     try {
       const payload = selected.isNew
-        ? { vorname: selected.vorname, nachname: selected.nachname, sterne }
-        : { recordId: selected.id, sterne };
+        ? {
+            vorname: selected.vorname,
+            nachname: selected.nachname,
+            sterne: newStars,
+            log: logEntry,
+          }
+        : {
+            recordId: selected.id,
+            sterne: newStars,
+            log: logEntry,
+          };
 
       await axios.post(apiBase, payload);
-      setStatus("Gespeichert!");
+      setStatus(`Bewertung ${action}!`);
 
-      // 🎉 Konfetti-Effekt
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-      });
+      // 🎉 Konfetti bei Erhöhung
+      if (change > 0) {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+        });
+      }
 
-      setTimeout(() => setStatus(""), 2500);
+      setTimeout(() => setStatus(""), 2000);
     } catch {
       setStatus("Fehler beim Speichern.");
     }
@@ -103,7 +133,6 @@ export default function App() {
             Bitte gib deinen vollständigen Namen ein.
           </motion.p>
 
-          {/* 🔄 Ladeanzeige */}
           {loading && (
             <div className="spinner-container">
               <div className="spinner"></div>
@@ -111,7 +140,6 @@ export default function App() {
             </div>
           )}
 
-          {/* Ergebnisse */}
           <AnimatePresence>
             {!loading && searched && query && (
               <motion.div
@@ -122,9 +150,7 @@ export default function App() {
               >
                 {results.length > 0 ? (
                   <>
-                    <p className="results-header">
-                      Wählen Sie Ihren Namen aus:
-                    </p>
+                    <p className="results-header">Wähle deinen Namen:</p>
                     {results.map((r) => (
                       <div
                         key={r.id}
@@ -134,27 +160,21 @@ export default function App() {
                         <div className="name">
                           {r.fields.Vorname} {r.fields.Nachname}
                         </div>
-                        {r.fields.Sterne ? (
-                          <div className="stars-preview">
-                            {"★".repeat(r.fields.Sterne)}
-                          </div>
-                        ) : (
-                          <div className="stars-preview empty">Noch keine Bewertung</div>
-                        )}
+                        <div className="stars-preview">
+                          {"★".repeat(r.fields.Sterne || 0)}
+                        </div>
                       </div>
                     ))}
                     <div className="add-new-section">
-                      <p className="small-info">
-                        Ihr Name ist nicht in der Liste?
-                      </p>
+                      <p className="small-info">Dein Name ist nicht dabei?</p>
                       <button className="add-new-btn" onClick={handleNew}>
-                        + Neue Bewertung hinzufügen
+                        + Neuen Eintrag erstellen
                       </button>
                     </div>
                   </>
                 ) : (
                   <div className="add-new-only">
-                    <p>Keine Einträge gefunden.</p>
+                    <p>Kein Eintrag gefunden.</p>
                     <button className="add-new-btn" onClick={handleNew}>
                       + Neue Bewertung für „{query}“ hinzufügen
                     </button>
@@ -172,30 +192,38 @@ export default function App() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <p>
+          <p className="rating-name">
             {selected.isNew
-              ? `Neue Bewertung für ${selected.vorname} ${selected.nachname}`
-              : `Bewertung für ${selected.fields.Vorname} ${selected.fields.Nachname}`}
+              ? `Neuer Eintrag für ${selected.vorname} ${selected.nachname}`
+              : `${selected.fields.Vorname} ${selected.fields.Nachname}`}
           </p>
 
-          <div className="stars">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <span
-                key={s}
-                className={s <= sterne ? "filled" : ""}
-                onClick={() => setSterne(s)}
-              >
-                ★
-              </span>
-            ))}
+          <div className="stars-large">
+            {"★".repeat(sterne)}
+            {"☆".repeat(5 - sterne)}
           </div>
 
-          <button onClick={handleSave} disabled={status === "Speichere..."}>
-            {status === "Speichere..." ? "Speichern..." : "Speichern"}
-          </button>
+          <div className="rating-controls">
+            <button
+              className="control-btn minus"
+              onClick={() => updateStars(-1)}
+              disabled={sterne <= 0}
+            >
+              −
+            </button>
+            <button
+              className="control-btn plus"
+              onClick={() => updateStars(1)}
+              disabled={sterne >= 5}
+            >
+              +
+            </button>
+          </div>
+
           <button className="back" onClick={() => setSelected(null)}>
-            Zurück
+            Zurück zur Suche
           </button>
+
           {status && <p className="status">{status}</p>}
         </motion.div>
       )}

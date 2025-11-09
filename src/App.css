@@ -241,3 +241,59 @@ button.back {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+.rating-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111;
+  margin-bottom: 12px;
+}
+
+.stars-large {
+  font-size: 36px;
+  color: #ffcc00;
+  margin: 10px 0 20px;
+  letter-spacing: 2px;
+}
+
+.rating-controls {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.control-btn {
+  width: 60px;
+  height: 60px;
+  font-size: 30px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: bold;
+}
+
+.control-btn.plus {
+  background: #007aff;
+  color: white;
+}
+
+.control-btn.minus {
+  background: #e5e5ea;
+  color: #111;
+}
+
+.control-btn:hover {
+  transform: scale(1.1);
+}
+
+@media (max-width: 480px) {
+  .control-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 26px;
+  }
+  .stars-large {
+    font-size: 28px;
+  }
+}
