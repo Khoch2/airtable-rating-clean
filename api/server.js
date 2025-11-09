@@ -27,7 +27,7 @@ function escapeForFormula(str = "") {
 }
 
 // 🔍 Suche
-app.get("/api/search", async (req, res) => {
+app.get("/search", async (req, res) => {
   const q = (req.query.q || "").trim();
   if (!q) return res.json([]);
 
@@ -51,7 +51,7 @@ app.get("/api/search", async (req, res) => {
 });
 
 // ➕ Neuer Eintrag
-app.post("/api/create", async (req, res) => {
+app.post("/create", async (req, res) => {
   const { vorname, nachname, sterne } = req.body || {};
   if (!vorname || !nachname)
     return res.status(400).json({ error: "Vorname und Nachname sind erforderlich" });
@@ -79,7 +79,7 @@ app.post("/api/create", async (req, res) => {
 });
 
 // ✏️ Update
-app.post("/api/update", async (req, res) => {
+app.post("/update", async (req, res) => {
   const { recordId, sterne } = req.body || {};
   if (!recordId) return res.status(400).json({ error: "recordId fehlt" });
 
@@ -91,23 +91,6 @@ app.post("/api/update", async (req, res) => {
   } catch (err) {
     console.error("Update Fehler:", err.response?.data || err.message);
     res.status(500).json({ error: "Fehler beim Aktualisieren in Airtable" });
-  }
-});
-
-// 🧪 Debug
-app.get("/api/debug", async (_req, res) => {
-  try {
-    const response = await airtable.get("", { params: { pageSize: 3 } });
-    res.json({
-      ok: true,
-      count: response.data.records?.length ?? 0,
-      sample: response.data.records?.map((r) => ({
-        id: r.id,
-        fields: r.fields,
-      })),
-    });
-  } catch (err) {
-    res.status(500).json({ ok: false, error: err.response?.data || err.message });
   }
 });
 

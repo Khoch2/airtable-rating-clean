@@ -6,7 +6,7 @@ import "./App.css";
 // Basis-URL für lokale Entwicklung oder Vercel
 const apiBase =
   process.env.NODE_ENV === "production"
-    ? "" // in Produktion ruft es automatisch die Serverless-Funktion auf
+    ? "/api/server"
     : "http://localhost:5050";
 
 export default function App() {
