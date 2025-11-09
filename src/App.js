@@ -18,6 +18,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
+  // 🔍 Suche mit Delay
   useEffect(() => {
     const fetchResults = async () => {
       if (!query.trim()) {
@@ -73,27 +74,39 @@ export default function App() {
       hour: "2-digit",
       minute: "2-digit",
     });
-
     const logEntry = `${formattedDate}, ${formattedTime} Uhr - von ${sterne} auf ${newStars} Sterne ${action}`;
 
     setSterne(newStars);
     setStatus("Speichere...");
 
     try {
-      const payload = selected.isNew
-        ? {
-            vorname: selected.vorname,
-            nachname: selected.nachname,
-            sterne: newStars,
-            log: logEntry,
-          }
-        : {
-            recordId: selected.id,
-            sterne: newStars,
-            log: logEntry,
-          };
+      let payload;
 
-      await axios.post(apiBase, payload);
+      // 🟢 Neuer Eintrag
+      if (selected.isNew && !selected.id) {
+        const res = await axios.post(apiBase, {
+          vorname: selected.vorname,
+          nachname: selected.nachname,
+          sterne: newStars,
+          log: logEntry,
+        });
+        // ID speichern, um Updates statt neuer Einträge zu machen
+        setSelected({
+          ...selected,
+          isNew: false,
+          id: res.data?.record?.id,
+          fields: res.data?.record?.fields || {},
+        });
+      } else {
+        // 🟡 Bestehender Eintrag
+        payload = {
+          recordId: selected.id,
+          sterne: newStars,
+          log: logEntry,
+        };
+        await axios.post(apiBase, payload);
+      }
+
       setStatus(`Bewertung ${action}!`);
 
       // 🎉 Konfetti bei Erhöhung
@@ -114,9 +127,10 @@ export default function App() {
   return (
     <div className="wrapper">
       <motion.h1 initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        Status-Abfrage für unser Projekt
+        Gib deine Bewertung ab
       </motion.h1>
 
+      {/* 🔍 Suchbereich */}
       {!selected && (
         <div className="search">
           <input
@@ -133,6 +147,7 @@ export default function App() {
             Bitte gib deinen vollständigen Namen ein.
           </motion.p>
 
+          {/* Ladeanzeige */}
           {loading && (
             <div className="spinner-container">
               <div className="spinner"></div>
@@ -176,7 +191,7 @@ export default function App() {
                   <div className="add-new-only">
                     <p>Kein Eintrag gefunden.</p>
                     <button className="add-new-btn" onClick={handleNew}>
-                      + Neuen Eintrag für „{query}“ erstellen
+                      + Neue Bewertung für „{query}“ hinzufügen
                     </button>
                   </div>
                 )}
@@ -186,6 +201,7 @@ export default function App() {
         </div>
       )}
 
+      {/* ⭐ Bewertung */}
       {selected && (
         <motion.div
           className="rating-card"
@@ -195,7 +211,9 @@ export default function App() {
           <p className="rating-name">
             {selected.isNew
               ? `Neuer Eintrag für ${selected.vorname} ${selected.nachname}`
-              : `${selected.fields.Vorname} ${selected.fields.Nachname}`}
+              : `${selected.fields?.Vorname || selected.vorname} ${
+                  selected.fields?.Nachname || selected.nachname
+                }`}
           </p>
 
           <div className="stars-large">
