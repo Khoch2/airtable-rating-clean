@@ -86,17 +86,22 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
               >
-                {results.length > 0 ? (
+                {/* Neu-Button immer oben */}
+                <div className="result-item new" onClick={handleNew}>
+                  ➕ Neue Bewertung für „{query}“ hinzufügen
+                </div>
+
+                {/* Gefundene Ergebnisse darunter */}
+                {results.length > 0 &&
                   results.map((r) => (
-                    <div key={r.id} className="result-item" onClick={() => handleSelect(r)}>
+                    <div
+                      key={r.id}
+                      className="result-item"
+                      onClick={() => handleSelect(r)}
+                    >
                       {r.fields.Vorname} {r.fields.Nachname}
                     </div>
-                  ))
-                ) : (
-                  <div className="result-item new" onClick={handleNew}>
-                    ➕ Neue Bewertung für „{query}“ hinzufügen
-                  </div>
-                )}
+                  ))}
               </motion.div>
             )}
           </AnimatePresence>
