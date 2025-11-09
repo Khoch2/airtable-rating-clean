@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import "./App.css";
+import confetti from "canvas-confetti";
+
 
 const apiBase =
   process.env.NODE_ENV === "production"
@@ -50,11 +52,23 @@ export default function App() {
         ? { vorname: selected.vorname, nachname: selected.nachname, sterne }
         : { recordId: selected.id, sterne };
       await axios.post(apiBase, payload);
+  
       setStatus("Gespeichert!");
+  
+      // 🎉 Konfetti-Effekt starten
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+      });
+  
+      // Nach kurzer Zeit zurücksetzen
+      setTimeout(() => setStatus(""), 2500);
     } catch {
       setStatus("Fehler beim Speichern.");
     }
   };
+  
 
   return (
     <div className="wrapper">
@@ -132,7 +146,10 @@ export default function App() {
             ))}
           </div>
 
-          <button onClick={handleSave}>Speichern</button>
+          <button onClick={handleSave} disabled={status === "Speichere..."}>
+  {status === "Speichere..." ? "Speichern..." : "Speichern"}
+</button>
+
           <button className="back" onClick={() => setSelected(null)}>
             Zurück
           </button>
