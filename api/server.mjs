@@ -61,7 +61,7 @@ export default async function handler(req, res) {
           records: [
             {
               id: recordId,
-              fields: { Sterne: Number(sterne) || 0, LOG: newLog },
+              fields: { Sterne: sterne, LOG: newLog },
             },
           ],
         });
@@ -74,7 +74,7 @@ export default async function handler(req, res) {
                 ID: Math.random().toString(36).slice(2, 10),
                 Vorname: vorname?.trim() || "",
                 Nachname: nachname?.trim() || "",
-                Sterne: Number(sterne) || 0,
+                Sterne: sterne,
                 LOG: `${formattedDate}, ${formattedTime} Uhr - neuer Eintrag erstellt`,
               },
             },

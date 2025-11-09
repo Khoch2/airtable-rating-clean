@@ -18,7 +18,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  // 🔍 Suche mit Delay
+  // 🔍 Suche
   useEffect(() => {
     const fetchResults = async () => {
       if (!query.trim()) {
@@ -46,8 +46,9 @@ export default function App() {
   }, [query]);
 
   const handleSelect = (record) => {
+    const sterneValue = Number(record.fields.Sterne) || 0;
     setSelected(record);
-    setSterne(record.fields.Sterne || 0);
+    setSterne(sterneValue);
     setResults([]);
   };
 
@@ -60,7 +61,7 @@ export default function App() {
 
   const updateStars = async (change) => {
     if (!selected) return;
-    const newStars = Math.min(5, Math.max(0, sterne + change));
+    const newStars = Math.min(20, Math.max(0, sterne + change));
     if (newStars === sterne) return;
 
     const action = change > 0 ? "erhöht" : "verringert";
@@ -82,15 +83,14 @@ export default function App() {
     try {
       let payload;
 
-      // 🟢 Neuer Eintrag
+      // 🆕 Neuer Eintrag
       if (selected.isNew && !selected.id) {
         const res = await axios.post(apiBase, {
           vorname: selected.vorname,
           nachname: selected.nachname,
-          sterne: newStars,
+          sterne: String(newStars), // jetzt Textfeld
           log: logEntry,
         });
-        // ID speichern, um Updates statt neuer Einträge zu machen
         setSelected({
           ...selected,
           isNew: false,
@@ -98,10 +98,10 @@ export default function App() {
           fields: res.data?.record?.fields || {},
         });
       } else {
-        // 🟡 Bestehender Eintrag
+        // ✏️ Bestehender Eintrag
         payload = {
           recordId: selected.id,
-          sterne: newStars,
+          sterne: String(newStars),
           log: logEntry,
         };
         await axios.post(apiBase, payload);
@@ -112,9 +112,9 @@ export default function App() {
       // 🎉 Konfetti bei Erhöhung
       if (change > 0) {
         confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
+          particleCount: 80,
+          spread: 60,
+          origin: { y: 0.7 },
         });
       }
 
@@ -130,7 +130,7 @@ export default function App() {
         Gib deine Bewertung ab
       </motion.h1>
 
-      {/* 🔍 Suchbereich */}
+      {/* 🔍 Suche */}
       {!selected && (
         <div className="search">
           <input
@@ -147,7 +147,6 @@ export default function App() {
             Bitte gib deinen vollständigen Namen ein.
           </motion.p>
 
-          {/* Ladeanzeige */}
           {loading && (
             <div className="spinner-container">
               <div className="spinner"></div>
@@ -176,7 +175,7 @@ export default function App() {
                           {r.fields.Vorname} {r.fields.Nachname}
                         </div>
                         <div className="stars-preview">
-                          {"★".repeat(r.fields.Sterne || 0)}
+                          ⭐ {r.fields.Sterne || 0}
                         </div>
                       </div>
                     ))}
@@ -216,10 +215,7 @@ export default function App() {
                 }`}
           </p>
 
-          <div className="stars-large">
-            {"★".repeat(sterne)}
-            {"☆".repeat(5 - sterne)}
-          </div>
+          <div className="stars-number">{sterne} / 20</div>
 
           <div className="rating-controls">
             <button
@@ -232,7 +228,7 @@ export default function App() {
             <button
               className="control-btn plus"
               onClick={() => updateStars(1)}
-              disabled={sterne >= 5}
+              disabled={sterne >= 20}
             >
               +
             </button>

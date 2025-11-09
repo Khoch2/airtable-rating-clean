@@ -269,3 +269,64 @@ button.back {
     font-size: 28px;
   }
 }
+
+.stars-number {
+  font-size: 28px;
+  font-weight: 700;
+  color: #CD0039;
+  margin-bottom: 14px;
+}
+
+.rating-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 10px;
+}
+
+.control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 68px;
+  font-size: 36px;
+  font-weight: 700;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #CD0039;
+  color: white;
+  box-shadow: 0 4px 10px rgba(205, 0, 57, 0.25);
+}
+
+.control-btn:hover {
+  transform: scale(1.1);
+  background: #b10031;
+}
+
+.control-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+@media (max-width: 480px) {
+  .control-btn {
+    width: 56px;
+    height: 56px;
+    font-size: 30px;
+  }
+
+  .rating-controls {
+    gap: 18px;
+  }
+
+  .stars-number {
+    font-size: 24px;
+  }
+}
+
